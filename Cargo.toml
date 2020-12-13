@@ -1,0 +1,18 @@
+[package]
+name = "playground"
+version = "0.1.0"
+authors = ["Oliver Eriksson <olieri@kth.se>"]
+edition = "2018"
+
+[dependencies]
+renderer_derive = { path = "renderer_derive" }
+gl = { path = "lib/gl" }
+glfw = "0.41.0"
+glm = "0.2.3"
+failure = "0.1.8"
+
+[build-dependencies]
+walkdir = "2.1"
+
+[features]
+gl_debug = ["gl/debug"]
