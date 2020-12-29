@@ -7,9 +7,9 @@ edition = "2018"
 [dependencies]
 renderer_derive = { path = "renderer_derive" }
 gl = { path = "lib/gl" }
-glfw = "0.41.0"
 glm = "0.2.3"
 failure = "0.1.8"
+glutin = "0.23.0"
 
 [build-dependencies]
 walkdir = "2.1"

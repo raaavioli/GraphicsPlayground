@@ -9,13 +9,15 @@ pub use self::shader::{ShaderProgram};
 pub use self::gl_buffers::*;
 pub use self::window::Window;
 
-
 use std::rc::Rc;
 use std::mem::size_of;
 use std::path::Path;
 
 use glm::*;
+
 pub use gl::types::*;
+use glutin::event::{Event, WindowEvent};
+use glutin::event_loop::{ControlFlow, EventLoop};
 
 #[derive(VertexAttribPointers, Copy, Clone, Debug)]
 #[repr(C, packed)]
@@ -30,8 +32,8 @@ struct Vertex {
 
 
 pub fn run() -> Result<(), failure::Error> {
-
-    let window = Window::from_size(1280, 720)?;
+    let events_loop = EventLoop::new();
+    let window = Window::from_size(1280.0, 720.0, &events_loop)?;
     let gl= window.get_gl_handle();
     //window_setup(&gl, vec3(0.5, 0.8, 1.), Vector2::new(width, height));
     enable_default_blend(Rc::clone(&gl));
@@ -69,20 +71,31 @@ pub fn run() -> Result<(), failure::Error> {
     Vertex::vertex_attrib_pointers(&gl);
     v_array.unbind();
 
-    let texture = Texture::from_resource();
+    //let texture = Texture::from_resource();
 
-    while !window.should_close() {
-        window.handle_events();
-        window.set_clear_color(Vector3::<f32>::new(0.3, 0.3, 0.3));
-        v_array.bind();
-        unsafe {
-            gl.Clear(gl::COLOR_BUFFER_BIT);
-            gl.DrawElements(gl::TRIANGLES, indices.len() as i32, gl::UNSIGNED_BYTE, std::ptr::null());
+    events_loop.run(move |event, _, control_flow| {
+        println!("{:?}", event);
+        *control_flow = ControlFlow::Wait;
+
+        match event {
+            Event::LoopDestroyed => return,
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::Resized(physical_size) => window.resize(physical_size),
+                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                _ => (),
+            },
+            Event::RedrawRequested(_) => {
+                window.set_clear_color(Vector3::<f32>::new(0.3, 0.3, 0.3));
+                v_array.bind();
+                unsafe {
+                    gl.Clear(gl::COLOR_BUFFER_BIT);
+                    gl.DrawElements(gl::TRIANGLES, indices.len() as i32, gl::UNSIGNED_BYTE, std::ptr::null());
+                }
+                window.swap_buffers();
+            }
+            _ => (),
         }
-
-        window.swap_buffers();
-    } 
-    Ok(()) 
+    });
 }
 
 fn enable_default_blend(gl: Rc<gl::Gl>) {

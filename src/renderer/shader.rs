@@ -30,11 +30,11 @@ impl ShaderProgram {
         let shaders = POSSIBLE_EXT
             .iter()
             .map(|file_extension| {
-                Shader::from_resource(gl, res, &format!("{}{}", name, file_extension))
+                Shader::from_resource(Rc::clone(&gl), res, &format!("{}{}", name, file_extension))
             })
             .collect::<Result<Vec<Shader>, Error>>()?;
 
-        Self::from_shaders(gl, &shaders[..], name)
+        Self::from_shaders(Rc::clone(&gl), &shaders[..], name)
     }
 
     fn from_shaders(gl: Rc<gl::Gl>, shaders: &[Shader], name: &str) -> Result<Self, Error> {
