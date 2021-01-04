@@ -1,8 +1,9 @@
 #[macro_use] extern crate failure;
 #[macro_use] extern crate renderer_derive;
 extern crate gl;
-extern crate glm;
+extern crate nalgebra;
 extern crate glutin;
+extern crate image;
 
 pub mod resources;
 pub mod renderer;

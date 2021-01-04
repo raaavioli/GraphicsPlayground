@@ -2,11 +2,16 @@
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec4 color;
+layout (location = 2) in vec2 uv;
 
-out vec4 frag_color;
+out vec2 frag_uv;
+
+uniform mat4 Perspective;
+uniform mat4 View;
 
 void main()
 {
-    gl_Position = vec4(position, 1.0f);
-    frag_color = color;
+    mat4 MVP = Perspective * View;
+    frag_uv = uv;
+    gl_Position = MVP * vec4(position, 1.0f);
 }

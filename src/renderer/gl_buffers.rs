@@ -1,5 +1,8 @@
 use std::rc::Rc;
 use gl::types::*;
+
+use super::Texture;
+
 pub struct VertexBuffer<B>
 where B: BufferType, {
     gl: Rc<gl::Gl>,
@@ -86,19 +89,19 @@ pub type ElementArrayBuffer = VertexBuffer<ElementArrayBufferType>;
 pub type ArrayBuffer = VertexBuffer<ArrayBufferType>;
 
 pub struct VertexArray {
-    gl: gl::Gl,
+    gl: Rc<gl::Gl>,
     vao: gl::types::GLuint,
 }
 
 impl VertexArray {
-    pub fn new(gl: &gl::Gl) -> VertexArray {
+    pub fn new(gl: Rc<gl::Gl>) -> VertexArray {
         let mut vao: gl::types::GLuint = 0;
         unsafe {
             gl.GenVertexArrays(1, &mut vao);
         }
 
         VertexArray {
-            gl: gl.clone(),
+            gl,
             vao,
         }
     }
@@ -121,5 +124,63 @@ impl Drop for VertexArray {
         unsafe {
             self.gl.DeleteVertexArrays(1, &self.vao);
         }
+    }
+}
+
+pub struct FrameBuffer {
+    gl: Rc<gl::Gl>,
+    id: GLuint,
+    texture: Texture,
+}
+
+impl FrameBuffer {
+    pub fn new(gl: Rc<gl::Gl>, width: u32, height: u32) -> Self {
+        let mut id: GLuint = 0;
+        unsafe {
+            gl.GenFramebuffers(1, &mut id);
+            gl.BindFramebuffer(gl::FRAMEBUFFER, id);
+        }
+
+        let texture: Texture = Texture::empty(Rc::clone(&gl), width, height);
+
+        unsafe {
+            gl.FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::TEXTURE_2D, texture.get_id(), 0);
+            if gl.CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+                println!("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+            }
+            gl.BindFramebuffer(gl::FRAMEBUFFER, 0); 
+        }
+
+        FrameBuffer {
+            gl, 
+            id,
+            texture,
+        }
+    }
+
+    pub fn bind(&self) {
+        unsafe {
+            self.gl.BindFramebuffer(gl::FRAMEBUFFER, self.id);
+        }
+    }
+
+    pub fn unbind(&self) {
+        unsafe {
+            self.gl.BindFramebuffer(gl::FRAMEBUFFER, 0);
+        }
+    }
+
+    pub fn resize(&self, width: u32, height: u32) {
+        self.texture.resize(width, height);
+    }
+
+    pub fn bind_texture(&self) {
+        self.texture.bind();
+    }
+}
+
+impl Drop for FrameBuffer {
+    fn drop(&mut self) {
+        unsafe { self.gl.DeleteFramebuffers(1, &mut self.id) }
     }
 }

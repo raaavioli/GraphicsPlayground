@@ -3,6 +3,8 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
+use image;
+
 #[derive(Debug, Fail)]
 pub enum Error {
     #[fail(display = "I/O error")]
@@ -11,11 +13,19 @@ pub enum Error {
     FileContainsNil,
     #[fail(display = "Failed get executable path")]
     FailedToGetExePath,
+    #[fail(display = "Failed to load image")]
+    FailedToLoadImage(#[cause] image::ImageError    )
 }
 
 impl From<io::Error> for Error {
     fn from(other: io::Error) -> Self {
         Error::Io(other)
+    }
+}
+
+impl From<image::ImageError> for Error {
+    fn from(other: image::ImageError) -> Self {
+        Error::FailedToLoadImage(other)
     }
 }
 
@@ -45,6 +55,11 @@ impl Resources {
         }
 
         Ok(unsafe { ffi::CString::from_vec_unchecked(buffer) })
+    }
+
+    pub fn load_rgb_image(&self, resource_name: &str) -> Result<image::RgbImage, Error> {
+        let img = image::open(resource_name_to_path(&self.root_path, resource_name))?;
+        Ok(img.into_rgb8())
     }
 }
 

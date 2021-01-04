@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 use crate::resources;
 use crate::resources::Resources;
+use nalgebra::{Matrix4};
 
 #[derive(Debug, Fail)]
 pub enum Error {
@@ -69,6 +70,24 @@ impl ShaderProgram {
 
     pub fn bind(&self) {
         unsafe { self.gl.UseProgram(self.id) }
+    }
+
+    pub fn get_uniform_location(&self, name: &str) -> Option<GLint> {
+        let cname = CString::new(name).expect("Expected uniform name to have no null bytes");
+
+        let location = unsafe {
+            self.gl.GetUniformLocation(self.id, cname.as_bytes_with_nul().as_ptr() as *const i8)
+        };
+
+        if location == -1 { return None; }
+
+        Some(location)
+    }
+
+    pub fn bind_uniform_mat4(&self, location: GLint, matrix: &Matrix4<f32>) {
+        unsafe {
+            self.gl.UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
+        }
     }
 }
 
